@@ -1,0 +1,73 @@
+env:
+  #処理中の一時ファイルを設置するフォルダのパスです。
+  #処理が終了すると一時ファイルは削除されます。
+  temp: Temp
+  #ファイルが見つかった時どんなふうに処理するか決定します。
+  #asyncを指定した場合の方が高速ですが、出力順が不定になります。
+  # wait 同期的に処理します
+  # async 非同期に処理します
+  exec-rule: wait
+
+#process で利用できる変数を設定できます。
+#{@変数名} で利用できます。
+#src, dst, name, 拡張子設定名, は利用できません。
+#{edr} は実行ファイルのディレクトリパスに置き換えられます。
+#相対パスで指定したい場合はこれを利用してください
+var:
+  Whisper: '"{@edr}/Tools/ToWhisperNet/ToWhisperNet.exe"'
+  whisper-l: 0.9
+
+  Renamer: '"{@edr}/Tools/Renamer/renamer.exe"'
+  NewLine: '"{@edr}/Tools/auto-NewLine/auto-NewLine.exe"'
+  SoundEffect: '"{@edr}/Tools/sox-14.4.2/sox.exe"'
+  Numbering: '"{@edr}/Tools/Numbering/Numbering.exe"'
+
+#監視するファイルの拡張子を設定します。 , 区切りで複数の値を設定できます。
+#同名ファイルで全ての拡張子のファイルが見つかった時、処理を開始します。
+ext:
+  vic: wav
+  txt: text,txt
+
+#見つけたファイルをアプリケーションで処理します。
+#ptnが設定されている場合、ファイル名を正規表現でマッチしたものだけ処理します。
+#ファイル名はextで最初に設定した拡張子のファイル名とマッチします。
+#trgにテキストファイルのパスを設定するとマッチ先をファイル内のテキストに変更します。
+# ext, var で設定した変数の他に下記のものを利用できます
+#{@src} 入力元フォルダー
+#{@dst} 出力先フォルダー
+#{@name} 拡張子を除いたファイル名
+process:
+  #  - ptn: .*?
+  #    trg: ""{@src}/{@txt}""
+  #    cmd: xxx.exe
+
+  #ファイル名をいい感じに変更します。
+  - cmd: '{@Renamer} -t "{@src}/{@txt}" "{@src}/{@vic}"'
+
+  #字幕ファイルをいい感じに改行します。
+  - cmd: '{@NewLine} -t "{@src}/{@txt}" -l 30'
+
+  #台詞先頭に ” が付いているものを囁き声っぽくします。
+  - ptn: ^.*?_[”] #声が大きすぎると音割れするので音量を半分にします。
+    cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" vol 0.5'
+  - ptn: ^.*?_[”] #囁き声にする
+    cmd: '{@Whisper} -l {@whisper-l} -o "{@dst}/{@vic}" "{@src}/{@vic}"'
+
+  #台詞先頭に （ が付いているものを心の声っぽくします
+  - ptn: ^.*?_[（]
+    cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" echo 1 0.6 100 0.25'
+
+  #台詞先頭に ＃ が付いているものを通信機越しっぽくします。
+  - ptn: ^.*?_[＃]
+    cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" bandpass 2306 250h vol 10'
+
+  #台詞先頭に ｜ が付いているものを扉越しっぽくします。
+  - ptn: ^.*?_[｜]
+    cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" lowpass 1700 10000h vol 1.6'
+
+#最終出力後にアプリケーションで処理します。
+#{@src}, {@dst}, {@name}を除いてprocessで利用できていた変数が使えます。
+#extで指定した値がファイル名からファイルパスになります。
+notify:
+  #番号を振ります
+  - '{@Numbering} "{@vic}" "{@txt}"'
