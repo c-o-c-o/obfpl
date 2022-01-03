@@ -79,6 +79,9 @@ func appfunc(exedp string) func(c *cli.Context) error {
 
 		erch := make(chan error)
 		srcp := c.Path("src")
+		if err := os.MkdirAll(srcp, 0777); err != nil {
+			return err
+		}
 		go pl.ObsFolder(srcp, erch)
 		println("監視先\n >", srcp)
 
