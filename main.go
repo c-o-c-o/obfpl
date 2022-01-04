@@ -59,7 +59,11 @@ func main() {
 func appfunc(exedp string) func(c *cli.Context) error {
 	return func(c *cli.Context) error {
 		//プロファイル読み込み
-		profile := c.Path("profile")
+
+		profile, err := filepath.Abs(c.Path("profile"))
+		if err != nil {
+			return err
+		}
 		pf, err := analyze.ReadProfile(profile)
 		if err != nil {
 			return err
@@ -70,7 +74,10 @@ func appfunc(exedp string) func(c *cli.Context) error {
 		pf = analyze.ExpandVar(*pf, exedp)
 
 		//プロファイルからパイプライン作成
-		dstp := c.Path("dst")
+		dstp, err := filepath.Abs(c.Path("dst"))
+		if err != nil {
+			return err
+		}
 		pl, err := pipeline.FromPipeline(dstp, pf)
 		if err != nil {
 			return err
@@ -78,7 +85,11 @@ func appfunc(exedp string) func(c *cli.Context) error {
 		println("出力先\n >", dstp)
 
 		erch := make(chan error)
-		srcp := c.Path("src")
+		srcp, err := filepath.Abs(c.Path("src"))
+		if err != nil {
+			return err
+		}
+
 		if err := os.MkdirAll(srcp, 0777); err != nil {
 			return err
 		}
