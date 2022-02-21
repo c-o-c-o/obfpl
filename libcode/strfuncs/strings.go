@@ -2,16 +2,7 @@ package strfuncs
 
 import (
 	"math/rand"
-	"strings"
 )
-
-func ReplaceMap(str string, repl map[string]string) string {
-	for k, v := range repl {
-		str = strings.ReplaceAll(str, k, v)
-	}
-
-	return str
-}
 
 func RandomString(n int) string {
 	var letter = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")

@@ -6,7 +6,7 @@ import (
 	"obfpl/libcode/maplib"
 	"obfpl/libcode/pathlib"
 	"obfpl/libcode/storage"
-	"obfpl/pipeline/process"
+	"obfpl/pipeline/apply/process"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +17,7 @@ func Run(ctx *ApplyContext, erch chan error) bool {
 	for _, p := range ctx.profile.Proc {
 		src, dst := updateContext(ctx, p, callc)
 
-		called, err := process.Call(ctx.name, p, ctx.repList)
+		called, err := process.Call(ctx.name, p, ctx.vars)
 		if err != nil {
 			erch <- err
 		}
@@ -35,7 +35,7 @@ func Run(ctx *ApplyContext, erch chan error) bool {
 		storage.RemoveDirInner(src, func(e error) { erch <- e })
 	}
 
-	ctx.repList = makeReplaceList(ctx, callc)
+	ctx.vars = makeVariables(ctx, callc)
 	return false
 }
 
@@ -51,22 +51,22 @@ func updateContext(ctx *ApplyContext, proc data.Process, callc int) (src string,
 		ctx.name = pathlib.WithoutExt(maplib.Choice(ctx.profile.Ext))
 	}
 
-	ctx.repList = makeReplaceList(ctx, callc)
-	return ctx.repList["{@src}"], ctx.repList["{@dst}"]
+	ctx.vars = makeVariables(ctx, callc)
+	return ctx.vars["src"], ctx.vars["dst"]
 }
 
-func makeReplaceList(ctx *ApplyContext, callc int) map[string]string {
-	repl := make(map[string]string, len(ctx.group)+3)
+func makeVariables(ctx *ApplyContext, callc int) map[string]string {
+	vars := make(map[string]string, len(ctx.group)+3)
 
-	repl["{@name}"] = ctx.name
-	repl["{@src}"] = ctx.swaps[(callc)%len(ctx.swaps)]
-	repl["{@dst}"] = ctx.swaps[(callc+1)%len(ctx.swaps)]
+	vars["name"] = ctx.name
+	vars["src"] = ctx.swaps[(callc)%len(ctx.swaps)]
+	vars["dst"] = ctx.swaps[(callc+1)%len(ctx.swaps)]
 
 	for k, v := range ctx.group {
-		repl["{@"+k+"}"] = v
+		vars[k] = v
 	}
 
-	return repl
+	return vars
 }
 
 func complDstGroup(ctx *ApplyContext, src string, dst string) (map[string]string, error) {

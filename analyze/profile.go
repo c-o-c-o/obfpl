@@ -2,7 +2,6 @@ package analyze
 
 import (
 	"obfpl/data"
-	"obfpl/libcode/strfuncs"
 	"os"
 	"strings"
 
@@ -26,21 +25,28 @@ func ReadProfile(path string) (*data.Profile, error) {
 
 func ExpandVar(pf data.Profile, exedp string) *data.Profile {
 	for k, v := range pf.Var {
-		pf.Var[k] = strings.ReplaceAll(v, "{@edr}", exedp)
-	}
-
-	vari := make(map[string]string, len(pf.Var))
-	for k, v := range pf.Var {
-		vari["{@"+k+"}"] = v
+		pf.Var[k] = strings.ReplaceAll(v, ToVarName("edr"), exedp)
 	}
 
 	for i := range pf.Proc {
-		pf.Proc[i].Cmd = strfuncs.ReplaceMap(pf.Proc[i].Cmd, vari)
+		pf.Proc[i].Cmd = VerReflection(pf.Proc[i].Cmd, pf.Var)
 	}
 
 	for i := range pf.Notify {
-		pf.Notify[i] = strfuncs.ReplaceMap(pf.Notify[i], vari)
+		pf.Notify[i] = VerReflection(pf.Notify[i], pf.Var)
 	}
 
 	return &pf
+}
+
+func ToVarName(name string) string {
+	return "{@" + name + "}"
+}
+
+func VerReflection(tgt string, vars map[string]string) string {
+	for k, v := range vars {
+		tgt = strings.ReplaceAll(tgt, ToVarName(k), v)
+	}
+
+	return tgt
 }

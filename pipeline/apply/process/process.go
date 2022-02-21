@@ -2,8 +2,8 @@ package process
 
 import (
 	"errors"
+	"obfpl/analyze"
 	"obfpl/data"
-	"obfpl/libcode/strfuncs"
 	"os"
 	"os/exec"
 	"regexp"
@@ -14,11 +14,11 @@ import (
 	"golang.org/x/text/transform"
 )
 
-func Call(name string, proc data.Process, repList map[string]string) (bool, error) {
+func Call(name string, proc data.Process, vars map[string]string) (bool, error) {
 	match, err := matching(
 		name,
-		strfuncs.ReplaceMap(proc.Ptn, repList),
-		strfuncs.ReplaceMap(proc.Trg, repList),
+		analyze.VerReflection(proc.Ptn, vars),
+		analyze.VerReflection(proc.Trg, vars),
 		proc.Enc)
 	if err != nil {
 		return false, err
@@ -27,7 +27,7 @@ func Call(name string, proc data.Process, repList map[string]string) (bool, erro
 		return false, nil
 	}
 
-	return true, CallExec(strfuncs.ReplaceMap(proc.Cmd, repList))
+	return true, CallExec(proc.Cmd, vars)
 }
 
 func matching(str string, ptn string, trg string, enc string) (bool, error) {
@@ -64,8 +64,8 @@ func matching(str string, ptn string, trg string, enc string) (bool, error) {
 	return reg.MatchString(str), nil
 }
 
-func CallExec(cmd string) error {
-	args := SplitCommand(cmd)
+func CallExec(cmd string, vars map[string]string) error {
+	args := SplitCommand(analyze.VerReflection(cmd, vars))
 	if len(args) < 1 {
 		return errors.New("the command is specified incorrectly")
 	}
