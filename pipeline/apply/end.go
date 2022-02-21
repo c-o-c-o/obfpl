@@ -55,7 +55,7 @@ func End(ctx *ApplyContext, outPath string, erch chan error) {
 		}
 	}
 
-	err = os.RemoveAll(filepath.Join(ctx.profile.Env.Temp, ctx.name))
+	err = os.RemoveAll(filepath.Join(ctx.profile.Env.Temp, ctx.temp))
 	if err != nil {
 		erch <- err
 		return

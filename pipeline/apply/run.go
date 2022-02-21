@@ -2,7 +2,9 @@ package apply
 
 import (
 	"errors"
+	"obfpl/data"
 	"obfpl/libcode/maplib"
+	"obfpl/libcode/pathlib"
 	"obfpl/libcode/storage"
 	"obfpl/pipeline/process"
 	"os"
@@ -12,16 +14,14 @@ import (
 
 func Run(ctx *ApplyContext, erch chan error) bool {
 	callc := 0
-	for _, v := range ctx.profile.Proc {
-		ctx.repList = makeReplaceList(ctx, callc)
-		src := ctx.repList["{@src}"]
-		dst := ctx.repList["{@dst}"]
+	for _, p := range ctx.profile.Proc {
+		src, dst := updateContext(ctx, p, callc)
 
-		iscall, err := process.Call(maplib.Choice(ctx.group), v, ctx.repList)
+		called, err := process.Call(ctx.name, p, ctx.repList)
 		if err != nil {
-			erch <- errors.New(err.Error())
+			erch <- err
 		}
-		if !iscall {
+		if !called {
 			continue
 		}
 		callc += 1
@@ -39,6 +39,22 @@ func Run(ctx *ApplyContext, erch chan error) bool {
 	return false
 }
 
+func updateContext(ctx *ApplyContext, proc data.Process, callc int) (src string, dst string) {
+	if proc.Ext != nil {
+		ctx.ext = *proc.Ext
+	}
+
+	name, exist := ctx.group[ctx.profile.Name]
+	if exist {
+		ctx.name = pathlib.WithoutExt(name)
+	} else {
+		ctx.name = pathlib.WithoutExt(maplib.Choice(ctx.profile.Ext))
+	}
+
+	ctx.repList = makeReplaceList(ctx, callc)
+	return ctx.repList["{@src}"], ctx.repList["{@dst}"]
+}
+
 func makeReplaceList(ctx *ApplyContext, callc int) map[string]string {
 	repl := make(map[string]string, len(ctx.group)+3)
 
@@ -54,12 +70,12 @@ func makeReplaceList(ctx *ApplyContext, callc int) map[string]string {
 }
 
 func complDstGroup(ctx *ApplyContext, src string, dst string) (map[string]string, error) {
-	sdetg, err := getGroup(src, ctx.profile.Ext)
+	sdetg, err := getGroup(src, ctx.ext)
 	if err != nil {
 		return nil, err
 	}
 
-	dgroup, err := getGroup(dst, ctx.profile.Ext)
+	dgroup, err := getGroup(dst, ctx.ext)
 	if err != nil {
 		return nil, err
 	}

@@ -31,10 +31,12 @@ func Init(pf *data.Profile, name string, pgroup map[string]string) (*ApplyContex
 	group := toNameGroup(pgroup)
 
 	return &ApplyContext{
-		name:    name,
+		temp:    name,
 		swaps:   swaps,
+		name:    name,
 		group:   group,
 		ctimes:  ctimes,
+		ext:     pf.Ext,
 		profile: pf,
 	}, nil
 }

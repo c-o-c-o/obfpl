@@ -6,11 +6,13 @@ import (
 )
 
 type ApplyContext struct {
-	name    string
+	temp    string
 	swaps   []string
+	name    string
 	group   map[string]string
 	ctimes  map[string]syscall.Filetime
 	repList map[string]string
 	profile *data.Profile
+	ext     map[string]string
 	Loging  func(string)
 }
