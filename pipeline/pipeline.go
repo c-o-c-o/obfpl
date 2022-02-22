@@ -43,7 +43,7 @@ func (pl *Pipeline) apply(path string, erch chan error) {
 		return
 	}
 
-	ctx, err := apply.Init(&pl.profile, name, pgroup)
+	ctx, err := apply.Init(&pl.profile, name, pl.OutputPath, pgroup)
 	if err != nil {
 		erch <- err
 		return
@@ -55,7 +55,7 @@ func (pl *Pipeline) apply(path string, erch chan error) {
 		return
 	}
 
-	apply.End(ctx, pl.OutputPath, erch)
+	apply.End(ctx, erch)
 }
 
 func (pl *Pipeline) checkDetectList(path string) (string, map[string]string, bool) {

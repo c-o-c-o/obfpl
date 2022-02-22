@@ -14,5 +14,6 @@ type ApplyContext struct {
 	vars    map[string]string
 	profile *data.Profile
 	ext     map[string]string
+	lastdst string
 	Loging  func(string)
 }

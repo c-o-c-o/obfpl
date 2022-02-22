@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func Init(pf *data.Profile, name string, pgroup map[string]string) (*ApplyContext, error) {
+func Init(pf *data.Profile, name string, lastdst string, pgroup map[string]string) (*ApplyContext, error) {
 	name = storage.GetExistsName(pf.Env.Temp, name)
 	swaps, err := storage.MakeDirList(filepath.Join(pf.Env.Temp, name), []string{"a", "b"})
 	if err != nil {
@@ -37,6 +37,7 @@ func Init(pf *data.Profile, name string, pgroup map[string]string) (*ApplyContex
 		group:   group,
 		ctimes:  ctimes,
 		ext:     pf.Ext,
+		lastdst: lastdst,
 		profile: pf,
 	}, nil
 }

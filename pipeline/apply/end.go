@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 )
 
-func End(ctx *ApplyContext, outPath string, erch chan error) {
+func End(ctx *ApplyContext, erch chan error) {
 	src := ctx.vars["src"]
-	err := os.MkdirAll(outPath, 0777)
+	err := os.MkdirAll(ctx.lastdst, 0777)
 	if err != nil {
 		erch <- err
 		return
@@ -21,11 +21,11 @@ func End(ctx *ApplyContext, outPath string, erch chan error) {
 		fl = append(fl, v)
 	}
 
-	sf := storage.GetFileNameSuffix(outPath, fl)
+	sf := storage.GetFileNameSuffix(ctx.lastdst, fl)
 
 	vars := make(map[string]string, len(ctx.group))
 	for k, v := range ctx.group {
-		dstp := filepath.Join(outPath, pathlib.AddSuffix(v, sf))
+		dstp := filepath.Join(ctx.lastdst, pathlib.AddSuffix(v, sf))
 		err := os.Rename(
 			filepath.Join(src, v),
 			dstp)

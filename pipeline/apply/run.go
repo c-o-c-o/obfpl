@@ -56,9 +56,10 @@ func updateContext(ctx *ApplyContext, proc data.Process, callc int) (src string,
 }
 
 func makeVariables(ctx *ApplyContext, callc int) map[string]string {
-	vars := make(map[string]string, len(ctx.group)+3)
+	vars := make(map[string]string, len(ctx.group)+4)
 
 	vars["name"] = ctx.name
+	vars["out"] = ctx.lastdst
 	vars["src"] = ctx.swaps[(callc)%len(ctx.swaps)]
 	vars["dst"] = ctx.swaps[(callc+1)%len(ctx.swaps)]
 
