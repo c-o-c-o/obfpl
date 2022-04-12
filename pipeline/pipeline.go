@@ -2,80 +2,114 @@ package pipeline
 
 import (
 	"obfpl/data"
-	"obfpl/libcode/pathlib"
 	"obfpl/pipeline/apply"
 	"obfpl/pipeline/observe"
+	"obfpl/pipeline/sync"
 	"path/filepath"
 )
 
 type Pipeline struct {
-	OutputPath string
-	Loging     func(string)
-	detectList map[string]map[string]string
-	profile    data.Profile
+	OutPath string
+	Loging  func(string)
+	profile data.Profile
 }
 
-func FromPipeline(op string, pf *data.Profile) (*Pipeline, error) {
+func FromProfile(op string, pf *data.Profile) (*Pipeline, error) {
 	r := Pipeline{
-		OutputPath: op,
-		detectList: map[string]map[string]string{},
-		profile:    *pf,
+		OutPath: op,
+		profile: *pf,
 	}
 
 	return &r, nil
 }
 
 func (pl *Pipeline) ObsFolder(obsp string, erch chan error) {
-	apply := func(path string, erch chan error) {
-		if pl.profile.Env.ExecRule == "async" {
-			go pl.apply(path, erch)
-		} else {
-			pl.apply(path, erch)
+	waiter := sync.NewClosedWaiter(erch)
+	pool := sync.NewExtPool(pl.profile.Ext)
+
+	observe.Folder(
+		obsp,
+		func(path string, erch chan error) {
+			//ファイルチェック
+			group, err := pool.Add(filepath.Base(path))
+			if err != nil {
+				erch <- err
+				return
+			}
+			if group == nil {
+				return
+			}
+			/* -------- */
+
+			ctx, err := apply.CreateContext(&pl.profile, obsp, pl.OutPath, group)
+			if err != nil {
+				erch <- err
+				return
+			}
+			waiter = waiter.Next()
+
+			switch pl.profile.Env.ExecRule {
+			case "async":
+				go pl.apply(ctx, waiter)
+			case "wait":
+				pl.apply(ctx, waiter)
+			}
+		},
+		erch)
+}
+
+func (pl *Pipeline) apply(ctx *apply.Context, waiter *sync.Waiter) {
+	defer waiter.Destroy()
+	ctx.Loging = pl.Loging
+
+	for _, p := range pl.profile.Proc {
+		err := apply.UpdateContext(ctx, &p)
+		if err != nil {
+			waiter.Error(err)
+			return
+		}
+
+		//処理待ち
+		if p.IsWait {
+			err := waiter.Wait()
+			if err != nil {
+				waiter.Error(err)
+				return
+			}
+		}
+
+		//呼び出しチェック
+		m, err := apply.Match(ctx, p)
+		if err != nil {
+			waiter.Error(err)
+			return
+		}
+
+		//アプリ呼び出し
+		if m {
+			err := apply.Call(ctx, p)
+			if err != nil {
+				waiter.Error(err)
+				return
+			}
 		}
 	}
 
-	observe.Folder(obsp, apply, erch)
-}
-
-func (pl *Pipeline) apply(path string, erch chan error) {
-	name, pgroup, isapply := pl.checkDetectList(path)
-	if !isapply {
-		return
-	}
-
-	ctx, err := apply.Init(&pl.profile, name, pl.OutputPath, pgroup)
+	//出力
+	err := apply.Output(ctx)
 	if err != nil {
-		erch <- err
-		return
-	}
-	ctx.Loging = pl.Loging
-
-	isbreak := apply.Run(ctx, erch)
-	if isbreak {
+		waiter.Error(err)
 		return
 	}
 
-	apply.End(ctx, erch)
-}
-
-func (pl *Pipeline) checkDetectList(path string) (string, map[string]string, bool) {
-	etype, err := apply.MatchExt(pl.profile.Ext, filepath.Ext(path)[1:])
-	if err != nil {
-		return "", nil, false
-	}
-	name := pathlib.WithoutExt(path)
-	_, exist := pl.detectList[name]
-	if !exist {
-		pl.detectList[name] = make(map[string]string)
-	}
-	pl.detectList[name][etype] = path
-
-	if len(pl.detectList[name]) == len(pl.profile.Ext) {
-		pgroup := pl.detectList[name]
-		delete(pl.detectList, name)
-
-		return name, pgroup, true
+	//通知用アプリ呼び出し
+	for _, cmd := range pl.profile.Notify {
+		err := apply.Notify(ctx, cmd)
+		if err != nil {
+			waiter.Error(err)
+			return
+		}
 	}
 
-	return name, nil, false
+	waiter.Close()
 }

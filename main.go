@@ -78,7 +78,7 @@ func appfunc(exedp string) func(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		pl, err := pipeline.FromPipeline(dstp, pf)
+		pl, err := pipeline.FromProfile(dstp, pf)
 		if err != nil {
 			return err
 		}

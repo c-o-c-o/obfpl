@@ -2,70 +2,12 @@ package process
 
 import (
 	"errors"
-	"obfpl/analyze"
-	"obfpl/data"
-	"os"
 	"os/exec"
-	"regexp"
 	"syscall"
-
-	"golang.org/x/text/encoding"
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
 )
 
-func Call(name string, proc data.Process, vars map[string]string) (bool, error) {
-	match, err := matching(
-		name,
-		analyze.VerReflection(proc.Ptn, vars),
-		analyze.VerReflection(proc.Trg, vars),
-		proc.Enc)
-	if err != nil {
-		return false, err
-	}
-	if !match {
-		return false, nil
-	}
-
-	return true, CallExec(proc.Cmd, vars)
-}
-
-func matching(str string, ptn string, trg string, enc string) (bool, error) {
-	if trg != "" {
-		buf, err := os.ReadFile(trg)
-		if err != nil {
-			return false, err
-		}
-
-		conv, exist := map[string]encoding.Encoding{
-			"":          japanese.ShiftJIS,
-			"utf-8":     nil,
-			"shift-jis": japanese.ShiftJIS,
-		}[enc]
-		if !exist {
-			return false, err
-		}
-
-		if conv != nil {
-			str, _, err = transform.String(conv.NewDecoder(), string(buf))
-			if err != nil {
-				return false, err
-			}
-		} else {
-			str = string(buf)
-		}
-	}
-
-	reg, err := regexp.Compile(ptn)
-	if err != nil {
-		return false, err
-	}
-
-	return reg.MatchString(str), nil
-}
-
-func CallExec(cmd string, vars map[string]string) error {
-	args := SplitCommand(analyze.VerReflection(cmd, vars))
+func Call(cmd string) error {
+	args := SplitCommand(cmd)
 	if len(args) < 1 {
 		return errors.New("the command is specified incorrectly")
 	}
@@ -89,31 +31,41 @@ func SplitCommand(cmd string) []string {
 	rcmd := []rune(cmd)
 	scmds := make([]string, 0, 50)
 	str := make([]rune, 0, len(rcmd))
-	instr := false
 
-	for _, v := range rcmd {
-		if v == '"' {
-			instr = !instr
+	{
+		instr := false
+
+		for _, v := range rcmd {
+			if v == '"' || v == '\'' {
+				instr = !instr
+			}
+
+			if v == ' ' && !instr {
+				scmds = append(scmds, string(DeleteQuotation(str)))
+				str = make([]rune, 0, len(rcmd))
+				continue
+			}
+
+			str = append(str, v)
 		}
-
-		if v == ' ' && !instr {
-			scmds = append(scmds, string(DeleteDQ(str)))
-			str = make([]rune, 0, len(rcmd))
-			continue
-		}
-
-		str = append(str, v)
 	}
 
 	if len(str) != 0 {
-		scmds = append(scmds, string(DeleteDQ(str)))
+		scmds = append(scmds, string(DeleteQuotation(str)))
 	}
 
 	return scmds
 }
 
-func DeleteDQ(s []rune) []rune {
-	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
+func DeleteQuotation(s []rune) []rune {
+	if len(s) < 2 {
+		return s
+	}
+
+	issq := (s[0] == '\'' && s[len(s)-1] == '\'')
+	isdq := (s[0] == '"' && s[len(s)-1] == '"')
+
+	if issq || isdq {
 		s = s[1 : len(s)-1]
 	}
 

@@ -1,9 +1,11 @@
 package maplib
 
-func Choice(m map[string]string) string {
+import "errors"
+
+func Choice(m map[string]string) (string, error) {
 	for _, v := range m {
-		return v
+		return v, nil
 	}
 
-	return ""
+	return "", errors.New("the map is empty")
 }

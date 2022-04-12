@@ -5,15 +5,19 @@ import (
 	"syscall"
 )
 
-type ApplyContext struct {
-	temp    string
-	swaps   []string
-	name    string
-	group   map[string]string
-	ctimes  map[string]syscall.Filetime
-	vars    map[string]string
+type Context struct {
 	profile *data.Profile
+	swap    Swap
 	ext     map[string]string
-	lastdst string
+	group   map[string]string
+	vars    map[string]string
+	ctimes  map[string]syscall.Filetime
+	name    string
+	outpath string
 	Loging  func(string)
+}
+
+type Swap struct {
+	list []string
+	idx  int
 }

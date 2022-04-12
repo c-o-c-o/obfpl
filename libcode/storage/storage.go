@@ -80,16 +80,18 @@ func MakeDirList(path string, namel []string) ([]string, error) {
 	return r, nil
 }
 
-func RemoveDirInner(src string, throw func(error)) {
+func RemoveDirInner(src string) error {
 	fl, err := ioutil.ReadDir(src)
 	if err != nil {
-		throw(err)
+		return err
 	}
 
 	for _, v := range fl {
 		err = os.RemoveAll(filepath.Join(src, v.Name()))
 		if err != nil {
-			throw(err)
+			return err
 		}
 	}
+
+	return nil
 }

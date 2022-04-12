@@ -13,9 +13,10 @@ type Profile struct {
 }
 
 type Process struct {
-	Ptn string             `yaml:"ptn"`
-	Trg string             `yaml:"trg"`
-	Enc string             `yaml:"enc"`
-	Ext *map[string]string `yaml:"ext"`
-	Cmd string             `yaml:"cmd"`
+	Ptn    string            `yaml:"ptn"`
+	Trg    string            `yaml:"trg"`
+	Enc    string            `yaml:"enc"`
+	Ext    map[string]string `yaml:"ext"`
+	IsWait bool              `yaml:"wait"`
+	Cmd    string            `yaml:"cmd"`
 }

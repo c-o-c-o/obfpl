@@ -3,6 +3,7 @@ package apply
 import (
 	"errors"
 	"obfpl/data"
+	"obfpl/libcode/pathlib"
 	"obfpl/libcode/retry"
 	"obfpl/libcode/storage"
 	"os"
@@ -11,42 +12,49 @@ import (
 	"time"
 )
 
-func Init(pf *data.Profile, name string, lastdst string, pgroup map[string]string) (*ApplyContext, error) {
-	name = storage.GetExistsName(pf.Env.Temp, name)
-	swaps, err := storage.MakeDirList(filepath.Join(pf.Env.Temp, name), []string{"a", "b"})
+func CreateContext(pf *data.Profile, obspath string, outpath string, group map[string]string) (*Context, error) {
+	fname, err := getGroupValue(group, pf.Name)
+	if err != nil {
+		return nil, err
+	}
+	name := pathlib.WithoutExt(fname)
+	sname := storage.GetExistsName(pf.Env.Temp, name)
+	swaps, err := storage.MakeDirList(filepath.Join(pf.Env.Temp, sname), []string{"a", "b"})
 	if err != nil {
 		return nil, err
 	}
 
-	ctimes, err := getCreateTimes(pgroup)
+	ctimes, err := getCreateTimes(obspath, group)
 	if err != nil {
 		return nil, err
 	}
 
-	err = moveGroup(pgroup, swaps[0])
+	err = moveFiles(obspath, swaps[0], group)
 	if err != nil {
 		return nil, err
 	}
 
-	group := toNameGroup(pgroup)
-
-	return &ApplyContext{
-		temp:    name,
-		swaps:   swaps,
-		name:    name,
+	ctx := &Context{
+		profile: pf,
+		swap: Swap{
+			list: swaps,
+			idx:  0,
+		},
+		ext:     pf.Ext,
 		group:   group,
 		ctimes:  ctimes,
-		ext:     pf.Ext,
-		lastdst: lastdst,
-		profile: pf,
-	}, nil
+		name:    name,
+		outpath: outpath,
+	}
+
+	return ctx, nil
 }
 
-func getCreateTimes(pgroup map[string]string) (map[string]syscall.Filetime, error) {
-	ctimes := make(map[string]syscall.Filetime, len(pgroup))
+func getCreateTimes(path string, files map[string]string) (map[string]syscall.Filetime, error) {
+	ctimes := make(map[string]syscall.Filetime, len(files))
 
-	for k, v := range pgroup {
-		info, err := os.Stat(v)
+	for k, fn := range files {
+		info, err := os.Stat(filepath.Join(path, fn))
 		if err != nil {
 			return nil, err
 		}
@@ -61,20 +69,14 @@ func getCreateTimes(pgroup map[string]string) (map[string]syscall.Filetime, erro
 	return ctimes, nil
 }
 
-func toNameGroup(pgroup map[string]string) map[string]string {
-	group := make(map[string]string, len(pgroup))
-	for k, v := range pgroup {
-		group[k] = filepath.Base(v)
-	}
-	return group
-}
-
-func moveGroup(pgroup map[string]string, dstp string) error {
-	for _, v := range pgroup {
+func moveFiles(srcpath string, dstpath string, group map[string]string) error {
+	for _, v := range group {
 		err := retry.CountRetry(
 			5,
 			func(c int) error {
-				return os.Rename(v, filepath.Join(dstp, filepath.Base(v)))
+				return os.Rename(
+					filepath.Join(srcpath, v),
+					filepath.Join(dstpath, v))
 			},
 			func(c int) {
 				time.Sleep(time.Millisecond * 500)
