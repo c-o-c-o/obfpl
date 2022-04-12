@@ -25,7 +25,7 @@ func FromProfile(op string, pf *data.Profile) (*Pipeline, error) {
 
 func (pl *Pipeline) ObsFolder(obsp string, erch chan error) {
 	waiter := sync.NewClosedWaiter(erch)
-	pool := sync.NewExtPool(pl.profile.Ext)
+	pool := NewExtPool(pl.profile.Ext)
 
 	observe.Folder(
 		obsp,

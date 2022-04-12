@@ -1,4 +1,4 @@
-package sync
+package pipeline
 
 import (
 	"obfpl/libcode/pathlib"
