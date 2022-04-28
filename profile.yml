@@ -76,7 +76,7 @@ process:
   - ptn: ^.*?_[｜]
     cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" lowpass 1700 10000h vol 1.6'
 
-  - wait: true #先に処理中のファイルを終了まで待ちます
+  - wait: true #■先に処理中のファイルを終了まで待ちます
     cmd: '{@Numbering} -d "{@out}" "{@src}/{@vic}" "{@src}/{@txt}"'
 
 #■最終出力後にアプリケーションで処理します。
