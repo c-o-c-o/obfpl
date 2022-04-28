@@ -71,11 +71,7 @@ func (pl *Pipeline) apply(ctx *apply.Context, waiter *sync.Waiter) {
 
 		//処理待ち
 		if p.IsWait {
-			err := waiter.Wait()
-			if err != nil {
-				waiter.Error(err)
-				return
-			}
+			_ = waiter.Wait()
 		}
 
 		//呼び出しチェック
