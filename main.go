@@ -58,8 +58,8 @@ func main() {
 
 func appfunc(exedp string) func(c *cli.Context) error {
 	return func(c *cli.Context) error {
-		//プロファイル読み込み
 
+		//プロファイル読み込み
 		profile, err := filepath.Abs(c.Path("profile"))
 		if err != nil {
 			return err
@@ -76,6 +76,10 @@ func appfunc(exedp string) func(c *cli.Context) error {
 		//プロファイルからパイプライン作成
 		dstp, err := filepath.Abs(c.Path("dst"))
 		if err != nil {
+			return err
+		}
+
+		if err := os.MkdirAll(dstp, 0777); err != nil {
 			return err
 		}
 		pl, err := pipeline.FromProfile(dstp, pf)
