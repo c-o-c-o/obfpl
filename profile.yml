@@ -76,6 +76,7 @@ process:
   - ptn: ^.*?_[｜]
     cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" lowpass 1700 10000h vol 1.6'
 
+  #■ファイル名先頭に番号を振ります
   - wait: true #■先に処理中のファイルを終了まで待ちます
     cmd: '{@Numbering} -d "{@out}" "{@src}/{@vic}" "{@src}/{@txt}"'
 
