@@ -56,7 +56,7 @@ process:
   - cmd: '{@Renamer} -t "{@src}/{@txt}" "{@src}/{@vic}"'
 
   #■字幕ファイルをいい感じに改行します。
-  - cmd: '{@NewLine} -t "{@src}/{@txt}"'
+  - cmd: '{@NewLine} -min 10 -max 30 -t "{@src}/{@txt}"'
 
   #■台詞先頭に ” が付いているものを囁き声っぽくします。
   - ptn: ^.*?_[”] #■声が大きすぎると音割れするので音量を半分にします。
