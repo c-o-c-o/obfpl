@@ -60,3 +60,6 @@ https://github.com/c-o-c-o/Renamer
 
 Numbering  
 https://github.com/c-o-c-o/Numbering
+
+autoDrops  
+https://github.com/c-o-c-o/autoDrops
