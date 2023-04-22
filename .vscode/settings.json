@@ -1,0 +1,13 @@
+{
+    "Lua.diagnostics.globals": [
+        "Execute",
+        "SetVar",
+        "SetName",
+        "SetEnv",
+        "SetExt",
+        "Match",
+        "Get",
+        "Wait",
+        "Complete"
+    ]
+}

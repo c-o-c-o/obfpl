@@ -59,21 +59,21 @@ process:
   - cmd: '{@NewLine} -min 10 -max 30 -t "{@src}/{@txt}"'
 
   #■台詞先頭に ” が付いているものを囁き声っぽくします。
-  - ptn: ^.*?_[”] #■声が大きすぎると音割れするので音量を半分にします。
+  - ptn: ^.*?_[”"] #■声が大きすぎると音割れするので音量を半分にします。
     cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" vol 0.5'
-  - ptn: ^.*?_[”] #■囁き声にする
+  - ptn: ^.*?_[”"] #■囁き声にする
     cmd: '{@Whisper} -l {@whisper-l} -o "{@dst}/{@vic}" "{@src}/{@vic}"'
 
   #■台詞先頭に （ が付いているものを心の声っぽくします
-  - ptn: ^.*?_[（]
+  - ptn: ^.*?_[（(]
     cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" echo 1 0.6 100 0.25'
 
   #■台詞先頭に ＃ が付いているものを通信機越しっぽくします。
-  - ptn: ^.*?_[＃]
+  - ptn: ^.*?_[＃#]
     cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" bandpass 2306 250h vol 10'
 
   #■台詞先頭に ｜ が付いているものを扉越しっぽくします。
-  - ptn: ^.*?_[｜]
+  - ptn: ^.*?_[｜|]
     cmd: '{@SoundEffect} "{@src}/{@vic}" "{@dst}/{@vic}" lowpass 1700 10000h vol 1.6'
 
   #■ファイル名先頭に番号を振ります

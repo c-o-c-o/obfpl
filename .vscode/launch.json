@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": ".",
-            "buildFlags": "-tags debug"
+            "buildFlags": "-tags debug",
         }
     ]
 }
