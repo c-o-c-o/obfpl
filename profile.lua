@@ -8,7 +8,7 @@ function Setup()
     SetEnv("exec-rule", "async")
 
     SetVar("Whisper", '"{@edr}/Tools/ToWhisperNet/ToWhisperNet.exe"')
-    SetVar("Whisper-l", 0.9)
+    SetVar("whisper-l", 0.9)
     SetVar("Renamer", '"{@edr}/Tools/Renamer/renamer.exe"')
     SetVar("NewLine", '"{@edr}/Tools/auto-NewLine/auto-NewLine.exe"')
     SetVar("SoundEffect", '"{@edr}/Tools/sox-14.4.2/sox.exe"')
