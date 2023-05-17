@@ -3,7 +3,7 @@ package apply
 import (
 	"errors"
 	"obfpl/app/pipeline/apply/lua"
-	"obfpl/app/pipeline/sync"
+	"obfpl/app/pipeline/apply/sync"
 	"os"
 	"path/filepath"
 	"regexp"

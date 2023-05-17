@@ -3,8 +3,8 @@ package pipeline
 import (
 	"errors"
 	"obfpl/app/pipeline/apply"
+	"obfpl/app/pipeline/apply/sync"
 	"obfpl/app/pipeline/exts"
-	"obfpl/app/pipeline/sync"
 	"path/filepath"
 
 	"golang.org/x/text/cases"

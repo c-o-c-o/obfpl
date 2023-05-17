@@ -2,8 +2,8 @@ package apply
 
 import (
 	"errors"
+	"obfpl/app/pipeline/apply/sync"
 	"obfpl/app/pipeline/apply/temp"
-	"obfpl/app/pipeline/sync"
 	"os"
 	"os/exec"
 	"path/filepath"

@@ -1,8 +1,8 @@
 package apply
 
 import (
+	"obfpl/app/pipeline/apply/sync"
 	"obfpl/app/pipeline/apply/yml"
-	"obfpl/app/pipeline/sync"
 	"path/filepath"
 	"strings"
 )
