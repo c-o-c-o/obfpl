@@ -22,7 +22,7 @@ end
 
 function Process()
     -- Match(Pattern string, TextFilePath ?string, Encode ?string["utf-8" | "shift-jis"])
-    -- Execute(Command: string)
+    -- Execute(Command string)
     -- Wait()
     -- SetExt(ExtName string, Pattern string)
     -- ClearExt()
