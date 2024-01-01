@@ -60,7 +60,7 @@ func DoScript(script string, funcs []*Function) error {
 		l.SetGlobal(f.Name, l.NewFunction(func(s *lua.LState) int {
 			flow := NewFlow(s)
 			if err := f.Func(flow); err != nil {
-				l.Panic(s)
+				l.Error(lua.LString(err.Error()), 0)
 			}
 
 			return flow.rtnCount
