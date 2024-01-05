@@ -1,7 +1,8 @@
 package app
 
 import (
-	"obfpl/app/obs"
+	"obfpl/-packages/log"
+	"obfpl/-packages/obs"
 	"obfpl/app/pipeline"
 	"os"
 	"path/filepath"
@@ -15,7 +16,7 @@ type Args struct {
 
 type App struct {
 	Args   Args
-	Logger *Logger
+	Logger *log.Logger
 }
 
 func (app App) Run() error {
@@ -44,7 +45,7 @@ func (app App) Run() error {
 		app.Logger.Log("プロファイルの読み込みに失敗しました")
 		return err
 	}
-	app.Logger.LogSubmsg("プロファイルを読み込みました", "プロファイルの形式 : "+pipe.Type)
+	app.Logger.LogSubmsg("プロファイルを読み込みました", "プロファイルの形式 : "+pipe.ProfProc.GetType())
 
 	dirobs, err := obs.NewDirObserver(src)
 	if err != nil {
@@ -52,7 +53,7 @@ func (app App) Run() error {
 	}
 
 	app.Logger.Log("\nフォルダの監視を開始します...")
-	go dirobs.Observe(pipe.CreateChecking(dirobs.Msgch))
+	go dirobs.Observe(pipe.CreateNotify(dirobs.Msgch))
 	for msg := range dirobs.Msgch {
 		app.Logger.Log(msg)
 	}

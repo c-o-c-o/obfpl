@@ -1,76 +1,42 @@
 package pipeline
 
 import (
-	"errors"
-	"obfpl/app/pipeline/apply"
-	"obfpl/app/pipeline/apply/sync"
-	"obfpl/app/pipeline/exts"
-	"path/filepath"
-
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
+	"obfpl/-packages/extgroup"
+	"obfpl/-packages/sync"
+	"obfpl/app/pipeline/profproc"
 )
 
 type Pipeline struct {
-	Type  string
-	apply apply.Apply
+	ProfProc profproc.ProfProc
 }
 
-/*
-ppath プロファイルパス
-
-dpath 出力先パス
-*/
-func NewPipeline(ppath string, dpath string) (*Pipeline, error) {
-	p := &Pipeline{}
-	p.Type = cases.Title(language.English).String(filepath.Ext(ppath)[1:])
-
-	var err error = nil
-	switch p.Type {
-	case "Lua":
-		p.apply, err = apply.NewLuaApply(ppath, dpath)
-	case "Yaml", "Yml":
-		p.apply, err = apply.NewYmlApply(ppath, dpath)
-	default:
-		err = errors.New("please specify the correct profile")
-	}
-
+func NewPipeline(profilePath string, outPath string) (*Pipeline, error) {
+	profProc, err := profproc.NewProfProc(profilePath, outPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return p, nil
+	return &Pipeline{
+		ProfProc: profProc,
+	}, nil
 }
 
-/*
-ファイルの拡張子一致チェック
-
-指定したファイルが揃うとProcess開始
-*/
-func (p Pipeline) CreateChecking(msgch chan<- string) func(string) {
+func (p *Pipeline) CreateNotify(msgch chan<- string) func(string) {
 	waiter := sync.NewClosedWaiter(msgch)
-	extsPool := exts.NewExtsPool(p.apply.GetExt)
+	extPool := extgroup.NewExtPool()
 
-	return func(file string) {
-		sf, err := extsPool.Add(file)
+	return func(filePath string) {
+		ext, err := p.ProfProc.SelectExt(filePath)
 		if err != nil {
 			msgch <- err.Error()
 			return
 		}
-		if sf == nil {
+
+		files := extPool.Push(filePath, ext, p.ProfProc.CreateExtList())
+		if files == nil {
 			return
 		}
 
-		waiter = waiter.Next()
-		asf := &apply.StartingFiles{
-			Name:  sf.Name,
-			Files: sf.Files,
-		}
-
-		if p.apply.IsAsync() {
-			go p.apply.Run(asf, waiter)
-		} else {
-			p.apply.Run(asf, waiter)
-		}
+		p.ProfProc.Call(files.Name, files.ExtGroup, waiter.Next())
 	}
 }

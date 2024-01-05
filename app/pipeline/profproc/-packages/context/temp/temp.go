@@ -1,7 +1,9 @@
 package temp
 
 import (
-	"obfpl/app/pipeline/apply/temp/suffix"
+	"io/fs"
+	"obfpl/-packages/array"
+	"obfpl/app/pipeline/profproc/-packages/context/temp/suffix"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -15,7 +17,18 @@ type Temporary struct {
 	cTime    time.Time
 }
 
-func NewTemporary(base string, name string, files []string, swaps []string) (*Temporary, error) {
+/*
+２つ以上のディレクトリで「入力元」「出力先」を示す２つの一時ディレクトリを提供する
+
+* base テンポラリファイルを生成するディレクトリ
+
+* name 任意のフォルダ名、被るとサフィックスを付けて生成する
+
+* fileNames 管理するファイル名のリスト
+
+* swaps 行き来するディレクトリの名前
+*/
+func NewTemporary(base string, name string, fileNames []string, swaps []string) (*Temporary, error) {
 	if len(swaps) < 2 {
 		panic("code error : 2 or more 'swaps' are always required")
 	}
@@ -31,12 +44,12 @@ func NewTemporary(base string, name string, files []string, swaps []string) (*Te
 		}
 	}
 
-	for _, file := range files {
+	for _, fileName := range fileNames {
 		//ファイルを一時フォルダへ移動を最大5回リトライ
 		err := retry(
 			5,
 			func(c int) error {
-				return os.Rename(file, filepath.Join(baseDir, swaps[0], filepath.Base(file)))
+				return os.Rename(fileName, filepath.Join(baseDir, swaps[0], filepath.Base(fileName)))
 			},
 			func(c int) {
 				time.Sleep(time.Millisecond * 500)
@@ -55,7 +68,7 @@ func NewTemporary(base string, name string, files []string, swaps []string) (*Te
 }
 
 /*
-一時フォルダーパスを取得する
+現在の一時フォルダーパスを取得する
 
 	return src, dst
 */
@@ -71,9 +84,9 @@ func (t *Temporary) GetPaths() (string, string) {
 
 target 'src' | 'dst'
 
-	return map[Ext]FileName, error
+	return []FileName, error
 */
-func (t *Temporary) GetGroup(target string, getExt func(file string) (string, error)) (map[string]string, error) {
+func (t *Temporary) LoadFileNames(target string) ([]string, error) {
 	i, ok := map[string]int{
 		"src": 0,
 		"dst": 1,
@@ -89,68 +102,57 @@ func (t *Temporary) GetGroup(target string, getExt func(file string) (string, er
 		return nil, err
 	}
 
-	group := map[string]string{}
-	for _, file := range files {
-		key, err := getExt(filepath.Join(t.baseDir, tgt, file.Name()))
-		if err != nil {
-			return nil, err
-		}
-		group[key] = filepath.Base(file.Name())
-	}
-
-	return group, nil
+	return array.Map(files, func(file fs.DirEntry) string {
+		return file.Name()
+	}), nil
 }
 
 /*
-一時フォルダーを切り替える
-
-	return map[Ext]FileName, error
+一時フォルダーを切り替える、その際に一定のルールに従ってファイルを移動させる。移動しなかったファイルは削除する
 */
-func (t *Temporary) Exchange(getExt func(file string) (string, error)) (map[string]string, error) {
+func (t *Temporary) Exchange(getMoveList func(srcFileNames []string, dstFileNames []string) ([]string, error)) error {
+
+	srcFileNames, err := t.LoadFileNames("src")
+	if err != nil {
+		return err
+	}
+
+	dstFileNames, err := t.LoadFileNames("dst")
+	if err != nil {
+		return err
+	}
+
+	moveList, err := getMoveList(srcFileNames, dstFileNames)
+	if err != nil {
+		return err
+	}
+
 	src, dst := t.GetPaths()
-
-	sgroup, err := t.GetGroup("src", getExt)
-	if err != nil {
-		return nil, err
-	}
-
-	dgroup, err := t.GetGroup("dst", getExt)
-	if err != nil {
-		return nil, err
-	}
-
-	//dst group を src group で穴埋め
-	for key, sname := range sgroup {
-		if _, ok := dgroup[key]; ok {
-			continue
-		}
-
-		err := os.Rename(filepath.Join(src, sname), filepath.Join(dst, sgroup[key]))
+	for _, moveFileName := range moveList {
+		err := os.Rename(filepath.Join(src, moveFileName), filepath.Join(dst, moveFileName))
 		if err != nil {
-			return nil, err
+			return err
 		}
-		dgroup[key] = sname
 	}
 
 	//srcディレクトリ内 全削除
 	files, err := os.ReadDir(src)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, file := range files {
 		err := os.RemoveAll(filepath.Join(src, file.Name()))
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
 	t.swapIdx += 1
-	return dgroup, nil
+	return nil
 }
 
 func (t *Temporary) Output(outdir string, files []string) error {
-	ctime := syscall.NsecToFiletime(t.cTime.UnixNano())
 	srcdir, _ := t.GetPaths()
 	sf, err := getValidFilesSuffix(outdir, files)
 	if err != nil {
@@ -166,8 +168,11 @@ func (t *Temporary) Output(outdir string, files []string) error {
 		if err := os.Rename(src, out); err != nil {
 			return err
 		}
+	}
 
-		//生成時刻を処理開始時に設定
+	//生成時刻を処理開始時に設定
+	ctime := syscall.NsecToFiletime(t.cTime.UnixNano())
+	for _, file := range files {
 		fh, err := syscall.Open(filepath.Join(outdir, file), os.O_RDWR, 0755)
 		if err != nil {
 			return err

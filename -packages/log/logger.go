@@ -1,4 +1,4 @@
-package app
+package log
 
 type Logger struct {
 	logging func(msg string)

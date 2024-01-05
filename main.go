@@ -2,8 +2,9 @@ package main
 
 import (
 	"log"
+	"obfpl/-packages/exec"
+	llog "obfpl/-packages/log"
 	"obfpl/app"
-	"obfpl/exec"
 	"os"
 	"path/filepath"
 
@@ -58,7 +59,7 @@ func Action(c *cli.Context) error {
 			Dst:     c.Path("dst"),
 			Profile: c.Path("profile"),
 		},
-		Logger: app.NewLogger(func(msg string) {
+		Logger: llog.NewLogger(func(msg string) {
 			println(msg)
 		}),
 	}

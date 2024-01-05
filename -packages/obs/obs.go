@@ -33,7 +33,7 @@ func (o *DirObserver) Destroy() {
 /*
 処理の都合上レスポンスを上げるために、生成時のみ通知
 */
-func (o *DirObserver) Observe(created func(file string)) {
+func (o *DirObserver) Observe(created func(filePath string)) {
 	err := o.wtr.Add(o.path)
 	if err != nil {
 		o.Msgch <- err.Error()
