@@ -16,11 +16,11 @@ builds:
       - 386
       - amd64
 archives:
-  - name_template: "{{ .ProjectName }}-{{ .Arch }}-{{ .Tag }}"
+  - name_template: >-
+      {{ .ProjectName }}-
+      {{- if eq .Arch "amd64" }}x64-v{{ .Version }}{{- end }}
+      {{- if eq .Arch "386" }}x32-v{{ .Version }}{{- end }}
     format: zip
-    replacements:
-      386: x86
-      amd64: x64
     files:
       - Readme.md
       - LICENCE
