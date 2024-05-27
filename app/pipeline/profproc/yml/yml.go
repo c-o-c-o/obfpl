@@ -86,10 +86,9 @@ func (p *YmlProfProc) call(name string, extGroup map[string]string, waiter *sync
 	})()
 
 	for _, proc := range p.profile.Proc {
-		basisVal := util.GetBasisValue(p.profile.Ext, p.profile.Name)
 		matched, err := util.Match(
 			proc.Ptn,
-			basisVal,
+			ctx.Name,
 			proc.Trg,
 			proc.Enc,
 		)
@@ -117,11 +116,12 @@ func (p *YmlProfProc) call(name string, extGroup map[string]string, waiter *sync
 		}
 
 		src, dst := ctx.Temp.GetPaths()
+		ctx.Name = util.GetBasisValue(group, p.profile.Name)
 		ctx.Vari.Update(map[string]string{
 			"src":  src,
 			"dst":  dst,
 			"out":  p.outPath,
-			"name": basisVal,
+			"name": ctx.Name,
 		}, group)
 
 		if proc.IsWait {
