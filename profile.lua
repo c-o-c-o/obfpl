@@ -13,6 +13,7 @@ function Setup()
     SetVar("NewLine", '"{@edr}/Tools/auto-NewLine/auto-NewLine.exe"')
     SetVar("SoundEffect", '"{@edr}/Tools/sox-14.4.2/sox.exe"')
     SetVar("Numbering", '"{@edr}/Tools/Numbering/Numbering.exe"')
+    SetVar("StrConv", '"{@edr}/Tools/cenc/cenc.exe"')
 
     SetExt("vic", "\\.wav$")
     SetExt("txt", "(\\.text$)|(\\.txt$)")
@@ -27,6 +28,7 @@ function Process()
     -- SetExt(ExtName string, Pattern string)
     -- ClearExt()
 
+    Execute('{@StrConv} auto utf-8 "{@src}/{@txt}"')
     Execute('{@Renamer} -t "{@src}/{@txt}" "{@src}/{@vic}"')
     Execute('{@NewLine} -min 10 -max 30 -t "{@src}/{@txt}"')
 

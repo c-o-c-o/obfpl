@@ -21,6 +21,7 @@ var:
   NewLine: '"{@edr}/Tools/auto-NewLine/auto-NewLine.exe"'
   SoundEffect: '"{@edr}/Tools/sox-14.4.2/sox.exe"'
   Numbering: '"{@edr}/Tools/Numbering/Numbering.exe"'
+  StrConv: '"{@edr}/Tools/cenc/cenc.exe"'
 
 #■監視するファイルの拡張子を設定します。 , 区切りで複数の値を設定できます。
 #■  同名ファイルで全ての拡張子のファイルが見つかった時、処理を開始します。
@@ -51,6 +52,9 @@ process:
   #■    vic: wav,mp3
   #■    txt: txt
   #■  cmd: xxx.exe
+
+  #■テキストファイルの文字コードを揃えます。
+  - cmd: '{@StrConv} auto utf-8 "{@src}/{@txt}"'
 
   #■ファイル名をいい感じに変更します。
   - cmd: '{@Renamer} -t "{@src}/{@txt}" "{@src}/{@vic}"'
