@@ -6,6 +6,7 @@ import (
 	"obfpl/app/pipeline/profproc/-packages/context/temp/suffix"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -33,7 +34,7 @@ func NewTemporary(base string, name string, fileNames []string, swaps []string) 
 		panic("code error : 2 or more 'swaps' are always required")
 	}
 
-	baseDir, err := getValidDirPath(base, name)
+	baseDir, err := getValidDirPath(base, strings.TrimSpace(name))
 	if err != nil {
 		return nil, err
 	}
