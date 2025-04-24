@@ -1,8 +1,10 @@
 package temp
 
 import (
+	"errors"
 	"io/fs"
 	"obfpl/-packages/array"
+	"obfpl/-packages/commons"
 	"obfpl/app/pipeline/profproc/-packages/context/temp/suffix"
 	"os"
 	"path/filepath"
@@ -47,9 +49,18 @@ func NewTemporary(base string, name string, fileNames []string, swaps []string) 
 
 	for _, fileName := range fileNames {
 		//ファイルを一時フォルダへ移動を最大5回リトライ
-		err := retry(
+		err := commons.Retry(
 			5,
 			func(c int) error {
+				fileInfo, err := os.Stat(fileName)
+				if err != nil {
+					return err
+				}
+
+				if fileInfo.Size() == 0 {
+					return errors.New("file size is 0")
+				}
+
 				return os.Rename(fileName, filepath.Join(baseDir, swaps[0], filepath.Base(fileName)))
 			},
 			func(c int) {
@@ -199,7 +210,7 @@ func (t *Temporary) Cleanup() error {
 
 func getValidFilesSuffix(base string, files []string) (string, error) {
 	var result = ""
-	err := retry(
+	err := commons.Retry(
 		10,
 		func(c int) error {
 			var sf = ""
@@ -224,7 +235,7 @@ func getValidFilesSuffix(base string, files []string) (string, error) {
 
 func getValidDirPath(base string, name string) (string, error) {
 	var result = ""
-	err := retry(
+	err := commons.Retry(
 		10,
 		func(c int) error {
 			cand := filepath.Join(base, suffix.With(name, suffix.Get(16)))
@@ -241,20 +252,4 @@ func getValidDirPath(base string, name string) (string, error) {
 		return "", err
 	}
 	return result, nil
-}
-
-func retry(c int, f func(c int) error, d func(c int)) error {
-	for i := 0; i < c; i++ {
-		err := f(i)
-
-		if err == nil {
-			break
-		}
-
-		if i+1 >= c {
-			return err
-		}
-		d(i)
-	}
-	return nil
 }
