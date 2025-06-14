@@ -54,7 +54,7 @@ func GetProcessMethods(profProc *LuaProfProc, waiter *sync.Waiter, ctx *context.
 			path := flow.GetString(1)
 			enc := flow.GetString(2)
 
-			val := util.GetBasisValue(ctx.Exts, profProc.profile.basis)
+			val := ctx.Vari.GetBasisValue(profProc.profile.basis)
 			matched, err := util.Match(ptn, val, path, enc)
 			if err != nil {
 				return err
@@ -88,7 +88,7 @@ func GetProcessMethods(profProc *LuaProfProc, waiter *sync.Waiter, ctx *context.
 				"src":  src,
 				"dst":  dst,
 				"out":  profProc.outPath,
-				"name": util.GetBasisValue(ctx.Exts, profProc.profile.basis),
+				"name": util.GetBasisValue(group, profProc.profile.basis),
 			}, group)
 
 			err = exec.Call(ctx.Vari.Apply(cmd))
@@ -121,7 +121,7 @@ func GetNotifyMethods(profProc *LuaProfProc, ctx *context.Context) []*lua.Functi
 			path := flow.GetString(1)
 			enc := flow.GetString(2)
 
-			val := util.GetBasisValue(ctx.Exts, profProc.profile.basis)
+			val := ctx.Vari.GetBasisValue(profProc.profile.basis)
 			matched, err := util.Match(ptn, val, path, enc)
 			if err != nil {
 				return err

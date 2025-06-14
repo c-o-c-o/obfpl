@@ -32,6 +32,22 @@ func NewVariable(vari map[string]string) (*Variable, error) {
 	return v, nil
 }
 
+func (v *Variable) GetBasisValue(key string) string {
+	if key == "" {
+		//適当な奴を返す
+		for _, n := range v.group {
+			return n[:len(n)-len(filepath.Ext(n))]
+		}
+		return ""
+	}
+
+	n, ok := v.group[key]
+	if !ok {
+		return ""
+	}
+	return n[:len(n)-len(filepath.Ext(n))]
+}
+
 func (v *Variable) Apply(str string) string {
 	for _, vars := range []map[string]string{v.values, v.group, v.system} {
 		for k, v := range vars {
